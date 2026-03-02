@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinguaCapture — Prototype</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #111118;
+      --surface2:  #1a1a24;
+      --border:    #2a2a3a;
+      --text:      #e8e8f0;
+      --muted:     #6b6b80;
+      --accent:    #6366f1;
+      --accent2:   #8b5cf6;
+      --red:       #ef4444;
+      --green:     #22c55e;
+      --teal:      #14b8a6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ────────────────────────────────── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .tagline { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .lang-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lang-label { font-size: 13px; color: var(--muted); }
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select:focus { border-color: var(--accent); }
+
+    /* ── Main ─────────────────────────────────── */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    /* ── Screens ──────────────────────────────── */
+    .screen { display: none; flex-direction: column; align-items: center; gap: 28px; }
+    .screen.active { display: flex; }
+
+    /* ── Idle ─────────────────────────────────── */
+    .hero-text { text-align: center; }
+    .hero-text h2 { font-size: 22px; font-weight: 600; }
+    .hero-text p  { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    .record-btn {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      background: var(--red);
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 40px rgba(239,68,68,0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .record-btn:hover { transform: scale(1.05); box-shadow: 0 0 56px rgba(239,68,68,0.5); }
+    .record-btn:active { transform: scale(0.97); }
+    .record-btn .dot { width: 28px; height: 28px; border-radius: 50%; background: white; }
+
+    .hint { font-size: 13px; color: var(--muted); }
+    .error-msg { font-size: 13px; color: var(--red); text-align: center; max-width: 360px; }
+
+    /* ── Recording ────────────────────────────── */
+    .recording-indicator {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: var(--red); font-weight: 500;
+    }
+    .pulse-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--red);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .transcript-box {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      min-height: 128px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .transcript-box .interim { color: var(--muted); }
+    .transcript-box .placeholder { color: var(--muted); font-style: italic; }
+
+    .waveform {
+      display: flex; align-items: center; gap: 3px; height: 32px;
+    }
+    .wave-bar {
+      width: 3px; border-radius: 2px; background: var(--accent);
+      animation: wave 0.8s ease-in-out infinite;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(8) { animation-delay: 0.1s; }
+    @keyframes wave {
+      0%, 100% { height: 6px; }
+      50% { height: 24px; }
+    }
+
+    .stop-btn {
+      padding: 12px 32px;
+      border-radius: 100px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .stop-btn:hover { background: var(--surface); border-color: var(--accent); }
+
+    /* ── Processing ───────────────────────────── */
+    .spinner {
+      width: 40px; height: 40px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing-text { font-size: 15px; color: var(--muted); }
+
+    /* ── Results ──────────────────────────────── */
+    #screen-results { align-items: stretch; }
+
+    .results-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .reset-btn {
+      font-size: 12px; color: var(--muted);
+      background: none; border: none; cursor: pointer;
+      transition: color 0.15s;
+    }
+    .reset-btn:hover { color: var(--text); }
+
+    .transcript-preview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .cards-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 8px;
+    }
+    .cards-count { font-size: 13px; color: var(--muted); }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      width: 100%;
+    }
+
+    /* ── Flip Card ────────────────────────────── */
+    .flip-card {
+      perspective: 1000px;
+      min-height: 140px;
+      cursor: pointer;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+    }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+    .flip-front, .flip-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 16px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      transition: border-color 0.2s;
+    }
+    .flip-front:hover { border-color: var(--accent); }
+    .flip-back { transform: rotateY(180deg); background: var(--surface2); }
+
+    .card-type-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 100px;
+      display: inline-block;
+      width: fit-content;
+    }
+    .badge-vocab   { background: rgba(99,102,241,0.15); color: #818cf8; }
+    .badge-phrase  { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .badge-concept { background: rgba(20,184,166,0.15); color: #2dd4bf; }
+
+    .card-word {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      margin-top: 8px;
+    }
+    .card-phrase-q {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .card-context {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 6px;
+      line-height: 1.4;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .card-flip-hint {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 4px;
+    }
+    .card-back-answer {
+      font-size: 14px;
+      color: #c4c4d4;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .card-back-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    /* ── Translation display ─────────────────── */
+    .translation-big {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #818cf8;
+      margin-top: 10px;
+      line-height: 1.2;
+    }
+    .translation-phrase {
+      font-size: 15px;
+      font-weight: 600;
+      color: #a78bfa;
+      margin-top: 10px;
+      line-height: 1.5;
+      font-style: italic;
+    }
+    .translation-loading {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mini-spinner {
+      width: 12px; height: 12px;
+      border: 1.5px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ── Progress bar ────────────────────────── */
+    .progress-row {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%;
+    }
+    .progress-track {
+      flex: 1; height: 3px; background: var(--border); border-radius: 2px;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent); border-radius: 2px;
+      width: 0%; transition: width 0.4s ease;
+    }
+    .progress-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 480px) {
+      .cards-grid { grid-template-columns: 1fr; }
+      header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Lingua<span>Capture</span></div>
+    <div class="tagline">Talk → Transcribe → Learn</div>
+  </div>
+  <div class="lang-row">
+    <span class="lang-label">Learning:</span>
+    <select id="l2-select">
+      <option>Spanish</option>
+      <option>French</option>
+      <option>Portuguese</option>
+      <option>German</option>
+      <option>Italian</option>
+      <option>Japanese</option>
+      <option>Mandarin</option>
+      <option>Arabic</option>
+      <option>Korean</option>
+    </select>
+  </div>
+</header>
+
+<main>
+
+  <!-- ① IDLE -->
+  <div id="screen-idle" class="screen active">
+    <div class="hero-text">
+      <h2>Record any conversation, meeting, or idea.</h2>
+      <p id="idle-subtitle">We'll turn it into Spanish lesson cards.</p>
+    </div>
+    <button class="record-btn" id="btn-record" title="Start recording">
+      <div class="dot"></div>
+    </button>
+    <span class="hint">Tap to start recording</span>
+    <p id="error-msg" class="error-msg" style="display:none"></p>
+  </div>
+
+  <!-- ② RECORDING -->
+  <div id="screen-recording" class="screen">
+    <div class="recording-indicator">
+      <div class="pulse-dot"></div>
+      Recording…
+    </div>
+    <div class="waveform">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+    </div>
+    <div class="transcript-box" id="live-transcript">
+      <span class="placeholder">Start speaking…</span>
+    </div>
+    <button class="stop-btn" id="btn-stop">Stop &amp; Generate Cards</button>
+  </div>
+
+  <!-- ③ PROCESSING -->
+  <div id="screen-processing" class="screen">
+    <div class="spinner"></div>
+    <p class="processing-text">Generating your lesson cards…</p>
+  </div>
+
+  <!-- ④ RESULTS -->
+  <div id="screen-results" class="screen">
+    <div class="results-header">
+      <span class="section-label">Transcript</span>
+      <button class="reset-btn" id="btn-reset">↺ Record again</button>
+    </div>
+    <div class="transcript-preview" id="transcript-preview"></div>
+
+    <div class="cards-header">
+      <span class="section-label" id="cards-label">Lesson Cards</span>
+      <span class="cards-count" id="cards-count"></span>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <span class="progress-label" id="progress-label">0 / 0 reviewed</span>
+    </div>
+
+    <div class="cards-grid" id="cards-grid"></div>
+  </div>
+
+</main>
+
+<script>
+// ──────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + name).classList.add('active');
+}
+
+// ──────────────────────────────────────────────
+// Language selector
+// ──────────────────────────────────────────────
+let l2 = 'Spanish';
+$('l2-select').addEventListener('change', e => {
+  l2 = e.target.value;
+  $('idle-subtitle').textContent = `We'll turn it into ${l2} lesson cards.`;
+});
+
+// ──────────────────────────────────────────────
+// Speech recognition
+// ──────────────────────────────────────────────
+let recognition = null;
+let finalText = '';
+let interimText = '';
+
+function startRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    $('error-msg').textContent = '⚠ Speech recognition requires Chrome or Edge. Please open this file in Chrome.';
+    $('error-msg').style.display = 'block';
+    return;
+  }
+
+  finalText = ''; interimText = '';
+  $('live-transcript').innerHTML = '<span class="placeholder">Start speaking…</span>';
+
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = e => {
+    interimText = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
+      else interimText += e.results[i][0].transcript;
+    }
+    renderLiveTranscript();
+  };
+
+  recognition.onerror = e => {
+    $('error-msg').textContent = `Mic error: ${e.error}. Make sure mic access is allowed.`;
+    $('error-msg').style.display = 'block';
+    showScreen('idle');
+  };
+
+  recognition.start();
+  showScreen('recording');
+}
+
+function renderLiveTranscript() {
+  const box = $('live-transcript');
+  if (!finalText && !interimText) {
+    box.innerHTML = '<span class="placeholder">Start speaking…</span>';
+    return;
+  }
+  box.innerHTML =
+    `<span>${finalText}</span><span class="interim">${interimText}</span>`;
+}
+
+$('btn-record').addEventListener('click', startRecording);
+
+$('btn-stop').addEventListener('click', async () => {
+  if (recognition) recognition.stop();
+  const full = (finalText + interimText).trim();
+  if (full.length < 15) {
+    $('error-msg').textContent = 'Not enough speech detected. Please try again and speak a bit longer.';
+    $('error-msg').style.display = 'block';
+    return;
+  }
+  showScreen('processing');
+  await renderResults(full);
+});
+
+$('btn-reset').addEventListener('click', () => {
+  finalText = ''; interimText = '';
+  $('error-msg').style.display = 'none';
+  showScreen('idle');
+});
+
+// ──────────────────────────────────────────────
+// Card generation
+// ──────────────────────────────────────────────
+const STOP = new Set('i a an the and or but in on at to for of with by from up about into through during is are was were be been being have has had do does did will would could should may might must can this that these those it its we you he she my your his her our their what which who when where why how all each every both few more most other some such no not only same so than too very just because as until while although if then there here am also back get got let put set go going want like make know think see come look use find give tell call keep need feel seem then really also just'.split(' '));
+
+function extractTopWords(text, n = 7) {
+  const freq = {};
+  text.toLowerCase().split(/\s+/).forEach(w => {
+    const clean = w.replace(/[^a-z']/g, '');
+    if (clean.length > 3 && !STOP.has(clean)) freq[clean] = (freq[clean] || 0) + 1;
+  });
+  return Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, n).map(([w]) => w);
+}
+
+function extractSentences(text) {
+  return text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 12);
+}
+
+function findContext(text, word) {
+  const sentences = extractSentences(text);
+  return sentences.find(s => s.toLowerCase().includes(word)) || '';
+}
+
+// ──────────────────────────────────────────────
+// Translation via MyMemory API (free, no key)
+// ──────────────────────────────────────────────
+const LANG_CODES = {
+  'Spanish': 'es', 'French': 'fr', 'Portuguese': 'pt', 'German': 'de',
+  'Italian': 'it', 'Japanese': 'ja', 'Mandarin': 'zh', 'Arabic': 'ar', 'Korean': 'ko'
+};
+
+async function translateText(text, targetLang) {
+  const code = LANG_CODES[targetLang] || 'es';
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${code}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.responseStatus === 200) {
+      const t = data.responseData.translatedText;
+      // MyMemory sometimes echoes back the input if it can't translate — detect that
+      if (t && t.toLowerCase() !== text.toLowerCase()) return t;
+    }
+    return null;
+  } catch { return null; }
+}
+
+async function generateCards(text) {
+  const cards = [];
+  const sentences = extractSentences(text);
+  const topWords = extractTopWords(text, 6);
+  const phraseList = sentences.filter(s => s.length >= 20 && s.length <= 140).slice(0, 3);
+
+  // Fetch all translations in parallel
+  const allTexts = [...topWords, ...phraseList];
+  const translations = await Promise.all(allTexts.map(t => translateText(t, l2)));
+
+  // Vocab cards
+  topWords.forEach((word, i) => {
+    const ctx = findContext(text, word);
+    const translation = translations[i];
+    cards.push({
+      type: 'vocab',
+      badge: 'badge-vocab',
+      badgeLabel: 'Vocabulary',
+      front: word,
+      frontSub: ctx ? `"${ctx.length > 75 ? ctx.slice(0,75)+'…' : ctx}"` : '',
+      translation: translation,
+      backNote: ctx ? `"${ctx.slice(0, 65)}${ctx.length>65?'…':''}"` : '',
+    });
+  });
+
+  // Phrase cards
+  phraseList.forEach((s, i) => {
+    const translation = translations[topWords.length + i];
+    cards.push({
+      type: 'phrase',
+      badge: 'badge-phrase',
+      badgeLabel: 'Phrase',
+      front: `"${s}"`,
+      frontSub: `How do you say this in ${l2}?`,
+      translation: translation,
+      backNote: 'Try saying it aloud — pronunciation counts!',
+    });
+  });
+
+  // Concept / speaking challenge card
+  const topic = sentences[0] || text.slice(0, 100);
+  cards.push({
+    type: 'concept',
+    badge: 'badge-concept',
+    badgeLabel: 'Challenge',
+    front: 'Speaking challenge',
+    frontSub: 'Can you retell this conversation in 3 sentences?',
+    translation: null,
+    backNote: `Topic: "${topic.slice(0,80)}${topic.length>80?'…':''}"`,
+  });
+
+  return cards.slice(0, 9);
+}
+
+// ──────────────────────────────────────────────
+// Render results
+// ──────────────────────────────────────────────
+let reviewedCards = new Set();
+
+async function renderResults(text) {
+  const cards = await generateCards(text);
+
+  $('transcript-preview').textContent = text.length > 320 ? text.slice(0, 320) + '…' : text;
+  $('cards-label').textContent = 'Lesson Cards — tap to flip';
+  $('cards-count').textContent = `${cards.length} cards`;
+
+  reviewedCards.clear();
+  updateProgress(0, cards.length);
+
+  const grid = $('cards-grid');
+  grid.innerHTML = '';
+
+  cards.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = 'flip-card';
+
+    // ── Front content
+    let frontMain = '';
+    if (card.type === 'vocab') {
+      frontMain = `<div class="card-word">${card.front}</div>`;
+    } else if (card.type === 'phrase') {
+      frontMain = `<div class="card-phrase-q" style="font-style:italic;font-size:14px;">${card.front}</div>`;
+    } else {
+      frontMain = `<div class="card-phrase-q" style="font-size:16px;font-weight:700;">${card.front}</div>`;
+    }
+
+    // ── Back content
+    let backMain = '';
+    if (card.type === 'concept') {
+      backMain = `<div class="card-back-answer">Retell this in ${l2} — no notes allowed.</div>`;
+    } else if (card.translation) {
+      if (card.type === 'vocab') {
+        backMain = `<div class="translation-big">${card.translation}</div>`;
+      } else {
+        backMain = `<div class="translation-phrase">${card.translation}</div>`;
+      }
+    } else {
+      backMain = `<div class="translation-loading"><span class="mini-spinner"></span> Translation unavailable</div>`;
+    }
+
+    el.innerHTML = `
+      <div class="flip-card-inner">
+        <div class="flip-front">
+          <span class="card-type-badge ${card.badge}">${card.badgeLabel}</span>
+          ${frontMain}
+          ${card.frontSub ? `<div class="card-context">${card.frontSub}</div>` : ''}
+          <div class="card-flip-hint">tap to reveal →</div>
+        </div>
+        <div class="flip-back">
+          <span class="card-type-badge ${card.badge}">${card.badgeLabel}</span>
+          ${backMain}
+          ${card.backNote ? `<div class="card-back-note">${card.backNote}</div>` : ''}
+          <div class="card-flip-hint">↩ flip back</div>
+        </div>
+      </div>
+    `;
+    el.addEventListener('click', () => {
+      el.classList.toggle('flipped');
+      if (el.classList.contains('flipped')) {
+        reviewedCards.add(idx);
+        updateProgress(reviewedCards.size, cards.length);
+      }
+    });
+    grid.appendChild(el);
+  });
+
+  showScreen('results');
+}
+
+function updateProgress(done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  $('progress-fill').style.width = pct + '%';
+  $('progress-label').textContent = `${done} / ${total} reviewed`;
+}
+</script>
+</body>
+</html>
